@@ -50,6 +50,7 @@ function addList({ setShowFormList, boardId, setboard }) {
           ref={listTitle}
           placeholder="Enter list title…"
           required
+          autoFocus
         />
         <div>
           <Button type="submit" variant="primary">

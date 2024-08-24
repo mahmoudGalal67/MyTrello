@@ -4,9 +4,12 @@ import user from "../../../public/user.svg";
 import list from "../../../public/list.svg";
 import attach from "../../../public/attach.svg";
 import deleteimage from "../../../public/delete.svg";
+import deleteDate from "../../../public/deleteDate.svg";
 
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
+
+import ModalImage from "react-modal-image";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -63,6 +66,15 @@ function CardDetails({
   onDeleteCard,
   updateCardCoverImage,
 }) {
+  const toolbarOptions = [
+    ["bold", "italic"],
+    ["link", "image"],
+  ];
+
+  const module = {
+    toolbar: toolbarOptions,
+  };
+
   const cookies = Cookies.get("token");
 
   const { user } = useContext(AuthContext);
@@ -187,19 +199,44 @@ function CardDetails({
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 
+  const updateDate = async (name, value) => {
+    const { user_name, comments, labels, updated_at, created_at, id, ...data } =
+      cardDetails;
+    setcardDetails((prev) => {
+      return {
+        ...prev,
+        start_time: value,
+      };
+    });
+    try {
+      await api({
+        url: "/cards/update",
+        headers: { Authorization: `Bearer ${cookies}` },
+        data: {
+          ...data,
+          card_id: card.card_id,
+          the_list_id: listId,
+          start_time: value,
+        },
+        method: "post",
+      });
+      setcardDetails((prev) => {
+        return {
+          ...prev,
+          start_time: value,
+        };
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const updateDetails = (name, value) => {
     setcardDetails((prev) => {
-      if (name == "start_time") {
-        return {
-          ...prev,
-          [name]: formatDate(value),
-        };
-      } else {
-        return {
-          ...prev,
-          [name]: value,
-        };
-      }
+      return {
+        ...prev,
+        [name]: value,
+      };
     });
   };
 
@@ -289,8 +326,6 @@ function CardDetails({
     );
   }
 
-  console.log(attachFile);
-
   return (
     <div>
       {" "}
@@ -324,19 +359,18 @@ function CardDetails({
                       showTimeInput
                       dateFormat="MM/dd/yyyy h:mm aa"
                       selected={cardDetails.start_time}
-                      onChange={(e) => updateDetails("start_time", e)}
-                      onBlur={(e) => updateRequest(e)}
+                      onChange={(e) => updateDate("start_time", e)}
                     />
                     {completed ? (
                       <div className="state">Completed</div>
-                    ) : (cardDetails.start_time - new Date()) /
+                    ) : (new Date(cardDetails.start_time) - new Date()) /
                         (1000 * 60 * 60 * 24) >
                       1 ? (
                       <div
                         className="state"
                         style={{ background: "transparent" }}
                       ></div>
-                    ) : (cardDetails.start_time - new Date()) /
+                    ) : (new Date(cardDetails.start_time) - new Date()) /
                         (1000 * 60 * 60 * 24) >
                       0 ? (
                       <div className="state" style={{ background: "yellow" }}>
@@ -348,6 +382,12 @@ function CardDetails({
                       </div>
                     )}
                   </div>
+                  <img
+                    src={deleteDate}
+                    style={{ width: "20px", cursor: "pointer" }}
+                    onClick={() => updateDate("start_time", "")}
+                    alt=""
+                  />
                 </div>
               )}
               <div className="description">
@@ -374,6 +414,7 @@ function CardDetails({
                     <>
                       <ReactQuill
                         theme="snow"
+                        modules={module}
                         value={cardDetails.description}
                         onChange={(e) => updateDetails("description", e)}
                       />
@@ -524,17 +565,29 @@ function CardDetails({
               {attachFile ? (
                 <div className="attachment">
                   <img width="30px" src={attach} alt="" /> Attachment{" "}
-                  <div className="iamge-wrapper">
+                  <div
+                    className="iamge-wrapper"
+                    style={{
+                      width: "100%",
+                      height: "200px",
+                    }}
+                  >
+                    <ModalImage
+                      small={URL.createObjectURL(attachFile)}
+                      large={URL.createObjectURL(attachFile)}
+                      alt="Hello World!"
+                    />
+                    {/*                     
                     <img
                       style={{
                         width: "100%",
-                        height: "200px",
+                        height: "100%",
                         objectFit: "cover",
                         marginBlock: "18px",
                       }}
                       src={URL.createObjectURL(attachFile)}
                       alt=""
-                    />
+                    /> */}
                   </div>
                 </div>
               ) : cardDetails.photo ? (
@@ -550,9 +603,6 @@ function CardDetails({
             </div>
 
             <div className="right">
-              <div className="item">
-                <img src={user} alt="" /> Join{" "}
-              </div>
               <div className="item" onClick={handleSaveCover}>
                 <img src={list} alt="Cover" /> Cover Save
               </div>
@@ -572,7 +622,7 @@ function CardDetails({
                 <DatePicker
                   showIcon
                   selected=""
-                  onChange={(e) => updateDetails("start_time", e)}
+                  onChange={(e) => updateDate("start_time", e)}
                   dateFormat="MM/dd/yyyy h:mm aa"
                   icon={CalendarIcon}
                 />

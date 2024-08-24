@@ -132,6 +132,7 @@ function List({ list, setboard }) {
                   type="text"
                   placeholder="Enter card title…"
                   required
+                  autoFocus
                 />
                 <div>
                   <Button type="submit" variant="primary">
