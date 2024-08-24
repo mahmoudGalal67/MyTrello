@@ -1,0 +1,71 @@
+.workspace {
+  margin-top: 45px;
+  padding: 0 2%;
+}
+
+.workspace .header {
+  padding: 25px 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-bottom: 1px solid rgb(184, 182, 182);
+}
+
+.invite-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspace .body h2 {
+  margin-left: 12%;
+  margin-top: 16px;
+  margin-bottom: 28px;
+}
+
+.workspace .workspace-item {
+  margin-top: 25px;
+}
+
+.workspace .filters {
+  margin-top: 18px;
+  padding: 0 4%;
+  display: flex;
+  justify-content: space-around;
+}
+
+.workspace .filters .left {
+  display: flex;
+  gap: 12px;
+}
+
+.ivite {
+  padding: 25px 0;
+  display: flex;
+  justify-content: space-between;
+}
+.ivite > a {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  background-color: rgb(240, 233, 233);
+  border-radius: 8px;
+  font-size: 14px;
+  color: rgb(31, 29, 29);
+  padding: 8px;
+}
+
+@media (max-width: 700px) {
+  .ivite {
+    flex-direction: column;
+  }
+  .workspace .filters {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .workspace .header {
+    flex-direction: column;
+    padding: 12px 0;
+  }
+}
