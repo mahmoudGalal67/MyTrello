@@ -10,7 +10,6 @@ import api from "../../apiAuth/auth";
 function List({ list, setboard }) {
   const [showCardList, setshowCardList] = useState(false);
   const [error, seterror] = useState(null);
-  const [cards, setCards] = useState([]);
 
   const cardTitle = useRef(null);
 

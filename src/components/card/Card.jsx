@@ -36,7 +36,7 @@ function Card({ card, onCardDelete, updateCardCoverImage, listId }) {
             />
           )}
         </div>
-        {card.card_text}
+        {cardNew.card_text}
       </div>
       <CardDetails
         card={cardNew}

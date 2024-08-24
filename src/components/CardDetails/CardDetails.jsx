@@ -90,7 +90,7 @@ function CardDetails({
     comment: false,
   });
   const newComment = useRef(null);
-  const [attachFile, setattachFile] = useState("");
+  // const [attachFile, setattachFile] = useState("");
 
   // cahnges
   const handleDelete = async () => {
@@ -250,12 +250,6 @@ function CardDetails({
       card_text: cardDetails.text,
     }));
     try {
-      const fileData = new FormData();
-      if (attachFile) {
-        fileData.append("file", attachFile);
-        fileData.append("fileName", attachFile.name);
-      }
-      console.log("dataForm" + fileData);
       await api({
         url: "/cards/update",
         headers: { Authorization: `Bearer ${cookies}` },
@@ -263,7 +257,6 @@ function CardDetails({
           ...data,
           card_id: card.card_id,
           the_list_id: listId,
-          photo: fileData,
         },
         method: "post",
       });
@@ -562,7 +555,7 @@ function CardDetails({
                   ))}
                 </div>
               </div>
-              {attachFile ? (
+              {/* {attachFile ? (
                 <div className="attachment">
                   <img width="30px" src={attach} alt="" /> Attachment{" "}
                   <div
@@ -577,7 +570,7 @@ function CardDetails({
                       large={URL.createObjectURL(attachFile)}
                       alt="Hello World!"
                     />
-                    {/*                     
+                                        
                     <img
                       style={{
                         width: "100%",
@@ -587,7 +580,7 @@ function CardDetails({
                       }}
                       src={URL.createObjectURL(attachFile)}
                       alt=""
-                    /> */}
+                    />
                   </div>
                 </div>
               ) : cardDetails.photo ? (
@@ -599,7 +592,7 @@ function CardDetails({
                 </div>
               ) : (
                 ""
-              )}
+              )} */}
             </div>
 
             <div className="right">
@@ -607,16 +600,16 @@ function CardDetails({
                 <img src={list} alt="Cover" /> Cover Save
               </div>
               <div className="item">
-                <input
+                {/* <input
                   type="file"
                   style={{ display: "none" }}
                   id="attachfile"
                   onChange={(e) => setattachFile(e.target.files[0])}
                 />
                 <label htmlFor="attachfile">
-                  {" "}
-                  <img src={attach} alt="" /> Attachment{" "}
-                </label>
+                  
+                </label> */}
+                <img src={attach} alt="" /> Attachment{" "}
               </div>
               <div className="item date" style={{ padding: "3px" }}>
                 <DatePicker
