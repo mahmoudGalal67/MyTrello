@@ -252,6 +252,12 @@
 .modal-body .comments .add-comment.input:hover {
   opacity: 1;
 }
+
+.modal-body .cover-image div > img {
+  width: 100%;
+  object-fit: cover;
+}
+
 .remove-cover {
   background-color: #e74c3c; /* red color */
   color: #fff; /* white text */

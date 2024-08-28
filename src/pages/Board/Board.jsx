@@ -50,7 +50,15 @@ function Board() {
   }
 
   return (
-    <div className="boards">
+    <div
+      className="boards"
+      style={{
+        backgroundImage: board.board_background
+          ? `url(https://back.alyoumsa.com/public/storage/${board.board_background})`
+          : "url(/public/photo-1675981004510-4ec798f42006.jpg)",
+        backgroundSize: "cover",
+      }}
+    >
       <Navbar />
       <SideBar />
       <div className="wrapper">
@@ -58,10 +66,13 @@ function Board() {
           <span>{board.board_name}</span>
         </div>
         <div className="wrapper-lists">
-          
           {board.lists_of_the_board.map((list) => (
-            <List key={list.list_id} list={list} setboard={setboard} />
-            
+            <List
+              key={list.list_id}
+              list={list}
+              boardId={Number(boardId)}
+              setboard={setboard}
+            />
           ))}
 
           <div className="addList">

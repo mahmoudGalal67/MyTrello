@@ -58,6 +58,7 @@ function addList({ setShowFormList, boardId, setboard }) {
           </Button>
           <CloseButton onClick={() => setShowFormList(false)} />
         </div>
+        {error && <div className="err">{error}</div>}
       </form>
     </div>
   );

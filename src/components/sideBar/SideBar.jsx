@@ -17,6 +17,8 @@ function SideBar() {
 
   const [loading, setLoading] = useState(true);
   const [workSpace, setworkSpace] = useState(null);
+  const [showUsers, setShowUsers] = useState(false); // State to control user list visibility
+  const [users, setUsers] = useState([]);
 
   const { workspaceId } = useParams();
 
@@ -42,6 +44,25 @@ function SideBar() {
       setLoading(false);
     }
   }, [workspaceId]);
+
+  const handleShowUsers = () => {
+    setShowUsers(!showUsers);
+    if (!showUsers) {
+      // Fetch users only if not already fetched
+      const fetchUsers = async () => {
+        try {
+          const { data } = await api({
+            url: `workspaces/get-workspace/${workspaceId}`,
+            headers: { Authorization: `Bearer ${cookies}` },
+          });
+          setUsers(data.result.users);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      fetchUsers();
+    }
+  };
 
   if (loading) {
     return (
@@ -70,9 +91,24 @@ function SideBar() {
           )}
         </Offcanvas.Header>
         <Offcanvas.Body>
-          <a href="#" className="board-item">
+          <a href="#" className="board-item" onClick={handleShowUsers}>
             <span>Members</span>
           </a>
+          {showUsers && (
+            <div>
+              {users.length > 0 ? (
+                users.map((user) => (
+                  <div key={user.user_id} className="board-item">
+                    <span>
+                      {user.user_name} ({user.email})
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p>No members found.</p>
+              )}
+            </div>
+          )}
           <a href="#" className="board-item">
             <span>Table</span>
           </a>

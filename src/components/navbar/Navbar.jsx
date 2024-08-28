@@ -20,8 +20,10 @@ function NavBar({ workSpaces }) {
   const workspaceTitle = useRef(null);
   const boardTitle = useRef(null);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  // const [assignedUsers, setAssignedUsers] = useState([]);
+  const [assignedUsers, setAssignedUsers] = useState([]);
   const navigate = useNavigate();
+  const [shouldFetchAssignedUsers, setShouldFetchAssignedUsers] =
+    useState(false);
 
   const location = useLocation();
   const path = location.pathname;
@@ -29,7 +31,6 @@ function NavBar({ workSpaces }) {
 
   const cookies = Cookies.get("token");
   const { workspaceId, boardId } = useParams();
-  console.log("Board ID from params:", boardId);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -57,13 +58,13 @@ function NavBar({ workSpaces }) {
         data: {
           name: boardTitle.current.value,
           workspace_id: workspaceId,
-          photo: "",
+          // photo: "",
         },
       });
       window.location.reload();
     } catch (err) {
       console.log(err);
-      setError(err.response?.data?.message);
+      setError(err.response?.data?.message || "somting went wrong");
     }
   };
 
@@ -83,109 +84,81 @@ function NavBar({ workSpaces }) {
     }
   };
 
-  const handleUserClick = async (userId) => {
-    try {
-      console.log("Assigning user:", userId, "to board:", boardId);
-
-      await api.post(
-        "/boards/assign-user-to-board",
-        {
-          board_id: boardId,
-          user_id: [userId],
-        },
-        {
+  useEffect(() => {
+    const fetchAssignedUsers = async () => {
+      try {
+        const { data } = await api.get(`/boards/get-board/${boardId}`, {
           headers: { Authorization: `Bearer ${cookies}` },
+        });
+        setAssignedUsers(data.data.users);
+      } catch (err) {
+        console.log(err);
+        setError(err.response?.data?.message);
+      }
+    };
+
+    if (boardId) {
+      fetchAssignedUsers();
+      setShouldFetchAssignedUsers(false);
+    }
+  }, [cookies, boardId, shouldFetchAssignedUsers]);
+
+  const handleUserClick = async (userId) => {
+    const isAssigned = assignedUsers.some((user) => user.user_id === userId);
+    try {
+      if (isAssigned) {
+        if (
+          confirm("user already exist in the board do you want to delete it")
+        ) {
+          await api.post(
+            "/boards/remove-user-from-board",
+            {
+              board_id: boardId,
+              user_id: userId,
+            },
+            {
+              headers: { Authorization: `Bearer ${cookies}` },
+            }
+          );
+          setAssignedUsers(assignedUsers.filter((user) => user.id !== userId));
+          alert("User successfully removed from the board!");
         }
-      );
-      alert("User successfully assigned to the board!");
+      } else {
+        await api.post(
+          "/boards/assign-user-to-board",
+          {
+            board_id: boardId,
+            user_id: [userId],
+          },
+          {
+            headers: { Authorization: `Bearer ${cookies}` },
+          }
+        );
+        setAssignedUsers([
+          ...assignedUsers,
+          users.find((user) => user.id === userId),
+        ]);
+        alert("User successfully assigned to the board!");
+      }
+
+      setShouldFetchAssignedUsers(true);
     } catch (err) {
       console.error("API error:", err);
-      const responseMessage = err.response?.data?.message;
-      const errorMessage = responseMessage || "An unexpected error occurred";
+
+      const responseMessage =
+        err.response?.data?.message || "An unexpected error occurred";
+      console.error("Detailed error response:", err.response);
 
       if (err.response?.status === 422) {
-        if (responseMessage.includes("already a member")) {
-          alert("This user is already a member of this board.");
-        } else {
-          setError(`Validation Error: ${errorMessage}`);
-        }
+        setError(`Validation Error: ${responseMessage}`);
       } else if (err.response?.status === 400) {
-        setError(`Bad Request: ${errorMessage}`);
+        setError(`Bad Request: ${responseMessage}`);
       } else {
-        setError(errorMessage);
+        setError(responseMessage);
       }
     }
   };
 
-  //  Toggle user assignment
-  //   const fetchAssignedUsers = async () => {
-  //     try {
-  // Assign users endpoint
-  //       const { data } = await api.get(``, {
-  //         headers: { Authorization: `Bearer ${cookies}` },
-  //       });
-  //       setAssignedUsers(data.data);
-  //     } catch (err) {
-  //       console.log(err);
-  //       setError(err.response?.data?.message);
-  //     }
-  //   };
-
-  //   if (boardId) {
-  //     fetchAssignedUsers();
-  //   }
-  //   fetchUsers();
-  // }, [cookies, boardId]);
-
-  // const handleUserClick = async (userId) => {
-  //   try {
-  //     if (assignedUsers.some(user => user.id === userId)) {
-  //       // User is already assigned, so remove them
-  //       await api.post(
-  //         "/boards/remove-user-from-board",
-  //         {
-  //           board_id: boardId,
-  //           user_id: userId,
-  //         },
-  //         {
-  //           headers: { Authorization: `Bearer ${cookies}` },
-  //         }
-  //       );
-  //       setAssignedUsers(assignedUsers.filter(user => user.id !== userId));
-  //       alert("User successfully removed from the board!");
-  //     } else {
-  //       // User is not assigned, so add them
-  //       await api.post(
-  //         "/boards/assign-user-to-board",
-  //         {
-  //           board_id: boardId,
-  //           user_id: [userId],
-  //         },
-  //         {
-  //           headers: { Authorization: `Bearer ${cookies}` },
-  //         }
-  //       );
-  //       setAssignedUsers([...assignedUsers, { id: userId }]); // Update state with new user
-  //       alert("User successfully assigned to the board!");
-  //     }
-  //   } catch (err) {
-  //     console.error("API error:", err);
-  //     const responseMessage = err.response?.data?.message;
-  //     const errorMessage = responseMessage || "An unexpected error occurred";
-
-  //     if (err.response?.status === 422) {
-  //       if (responseMessage.includes("already a member")) {
-  //         alert("This user is already a member of this board.");
-  //       } else {
-  //         setError(`Validation Error: ${errorMessage}`);
-  //       }
-  //     } else if (err.response?.status === 400) {
-  //       setError(`Bad Request: ${errorMessage}`);
-  //     } else {
-  //       setError(errorMessage);
-  //     }
-  //   }
-  // };
   const handleLogout = async () => {
     try {
       await api.post(
@@ -293,6 +266,7 @@ function NavBar({ workSpaces }) {
                   <Button type="submit" variant="primary">
                     Create Board
                   </Button>
+                  {error && <span className="err">{error}</span>}
                 </form>
               </NavDropdown>
             )}

@@ -5,6 +5,7 @@ import list from "../../../public/list.svg";
 import attach from "../../../public/attach.svg";
 import deleteimage from "../../../public/delete.svg";
 import deleteDate from "../../../public/deleteDate.svg";
+import deleteCover from "../../../public/deleteCover.svg";
 
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
@@ -60,11 +61,11 @@ const CalendarIcon = () => {
 function CardDetails({
   onCloseModal,
   open,
-  card,
+
   listId,
-  setcardNew,
   onDeleteCard,
-  updateCardCoverImage,
+  setcardDetails,
+  cardDetails,
 }) {
   const toolbarOptions = [
     ["bold", "italic"],
@@ -78,11 +79,9 @@ function CardDetails({
   const cookies = Cookies.get("token");
 
   const { user } = useContext(AuthContext);
-  const [coverImage, setCoverImage] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editText, seteditText] = useState(false);
-  const [cardDetails, setcardDetails] = useState({});
   const [completed, setcompleted] = useState(false);
   const [addItems, setaddItems] = useState({
     title: false,
@@ -90,24 +89,26 @@ function CardDetails({
     comment: false,
   });
   const newComment = useRef(null);
-  // const [attachFile, setattachFile] = useState("");
 
   // cahnges
   const handleDelete = async () => {
     try {
       const response = await api({
-        url: `/cards/destroy/${card.card_id}`,
+        url: `/cards/destroy/${cardDetails.id}`,
         method: "DELETE",
         headers: { Authorization: `Bearer ${cookies}` },
       });
 
       if (response.ok || response.status === 204 || response.status === 203) {
         console.log("Card deleted successfully");
-        onDeleteCard(card.card_id);
+        onDeleteCard(cardDetails.id);
         onCloseModal();
         alert("Card deleted successfully");
       } else {
-        console.error("Failed to delete the card. Status:", response.status);
+        console.error(
+          "Failed to delete the cardDetails. Status:",
+          response.status
+        );
       }
     } catch (error) {
       console.error("An error occurred while deleting the card:", error);
@@ -116,60 +117,41 @@ function CardDetails({
 
   const handleCoverUpload = async (event) => {
     const file = event.target.files[0];
+    if (!file) return;
+
     const formData = new FormData();
     formData.append("photo", file);
 
     try {
-      const response = await api.post(
-        `/cards/upload-photo/${card.card_id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${cookies}`,
-          },
-        }
-      );
+      const response = await api({
+        url: `/cards/upload-photo/${cardDetails.id}`,
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${cookies}`,
+          "Content-Type": "multipart/form-data",
+        },
+        data: formData,
+      });
 
       if (response.status === 200) {
-        console.log("Cover photo uploaded successfully");
-        setCoverImage(response.data.photo_url);
-        alert("Cover image added/changed successfully!");
+        setcardDetails((prev) => ({
+          ...prev,
+          photo: response.data.photo_url,
+        }));
       } else {
-        console.error("Failed to upload cover photo. Status:", response.status);
+        console.error("Failed to upload cover image. Status:", response.status);
+        console.error("Response data:", response.data);
+        alert(
+          "Failed to upload cover image. Please check the console for details."
+        );
       }
     } catch (error) {
       console.error(
-        "An error occurred while uploading the cover photo:",
-        error
+        "Error uploading cover image:",
+        error.response?.data || error.message
       );
     }
   };
-
-  const handleRemoveCover = async () => {
-    try {
-      await api({
-        url: `/cards/delete-photo/${card.card_id}`,
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${cookies}` },
-      });
-      console.log("Cover photo removed successfully");
-      setCoverImage(null);
-      updateCardCoverImage(card.card_id, null);
-      onCloseModal();
-    } catch (error) {
-      console.error("An error occurred while removing the cover photo:", error);
-    }
-  };
-
-  const handleSaveCover = () => {
-    if (coverImage) {
-      updateCardCoverImage(card.card_id, coverImage);
-      onCloseModal();
-    }
-  };
-
-  // changes
 
   const openItem = (name) => {
     setaddItems((prev) => {
@@ -188,20 +170,16 @@ function CardDetails({
     });
   };
 
-  function formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  }
-
   const updateDate = async (name, value) => {
-    const { user_name, comments, labels, updated_at, created_at, id, ...data } =
-      cardDetails;
+    const {
+      user_name,
+      comments,
+      labels,
+      updated_at,
+      created_at,
+      id,
+      ...other
+    } = cardDetails;
     setcardDetails((prev) => {
       return {
         ...prev,
@@ -213,8 +191,9 @@ function CardDetails({
         url: "/cards/update",
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
-          ...data,
-          card_id: card.card_id,
+          ...other,
+          photo: other.photo.replace("/storage/", ""),
+          card_id: cardDetails.id,
           the_list_id: listId,
           start_time: value,
         },
@@ -240,22 +219,61 @@ function CardDetails({
     });
   };
 
-  const updateRequest = async (e) => {
-    e.preventDefault();
-
-    const { user_name, comments, labels, updated_at, created_at, id, ...data } =
-      cardDetails;
-    setcardNew((prev) => ({
-      ...prev,
-      card_text: cardDetails.text,
-    }));
+  const updateDateState = async (e) => {
+    const {
+      user_name,
+      comments,
+      labels,
+      updated_at,
+      created_at,
+      id,
+      ...other
+    } = cardDetails;
+    setcardDetails((prev) => {
+      return {
+        ...prev,
+        completed: e.target.checked,
+      };
+    });
     try {
       await api({
         url: "/cards/update",
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
-          ...data,
-          card_id: card.card_id,
+          ...other,
+          photo: other.photo.replace("/storage/", ""),
+          card_id: cardDetails.id,
+          the_list_id: listId,
+          completed: e.target.checked,
+        },
+        method: "post",
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const updateRequest = async (e) => {
+    e.preventDefault();
+
+    const {
+      user_name,
+      comments,
+      labels,
+      updated_at,
+      created_at,
+      id,
+      ...other
+    } = cardDetails;
+
+    try {
+      await api({
+        url: "/cards/update",
+        headers: { Authorization: `Bearer ${cookies}` },
+        data: {
+          ...other,
+          photo: other.photo.replace("/storage/", ""),
+          card_id: cardDetails.id,
           the_list_id: listId,
         },
         method: "post",
@@ -279,7 +297,7 @@ function CardDetails({
       await api({
         url: "/comments/create",
         headers: { Authorization: `Bearer ${cookies}` },
-        data: { card_id: card.card_id, comment: newComment.current.value },
+        data: { card_id: cardDetails.id, comment: newComment.current.value },
         method: "post",
       });
     } catch (err) {
@@ -287,27 +305,25 @@ function CardDetails({
     }
   };
 
-  useEffect(() => {
-    if (true) {
-      const getCardDetails = async () => {
-        try {
-          const { data } = await api({
-            url: `cards/get-card/${card.card_id}`,
-            // url: "/cards/get-card/41",
-            headers: { Authorization: `Bearer ${cookies}` },
-          });
-          setcardDetails(data.data);
-          setLoading(false);
-        } catch (err) {
-          setLoading(false);
-          console.log(err);
-        }
-      };
-      getCardDetails();
-    } else {
-      setLoading(false);
+  const handleRemovePhoto = async () => {
+    try {
+      const url = `/cards/delete-photo/${cardDetails.id}`;
+      const response = await api(url, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${cookies}`,
+        },
+      });
+
+      alert("Photo removed successfully");
+      setcardDetails((prev) => ({
+        ...prev,
+        photo: "",
+      }));
+    } catch (error) {
+      console.error("Error removing photo:", error);
     }
-  }, [card.card_id]);
+  };
 
   if (loading) {
     return (
@@ -324,6 +340,15 @@ function CardDetails({
       {" "}
       <Modal classNames="card-modal" open={open} onClose={onCloseModal} center>
         <div className="modal-body">
+          {cardDetails.photo && (
+            <div className="cover-image">
+              <img
+                src={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
+                alt="Cover"
+                style={{ width: "100%", height: "200px" }}
+              />
+            </div>
+          )}
           {editText ? (
             <form onSubmit={updateRequest}>
               <input
@@ -344,7 +369,8 @@ function CardDetails({
                 <div className="date-wrapper">
                   <Form.Check
                     type="checkbox"
-                    onChange={(e) => setcompleted(e.target.checked)}
+                    checked={cardDetails.completed}
+                    onChange={updateDateState}
                   />
                   <div className="state-wrapper">
                     <DatePicker
@@ -354,7 +380,7 @@ function CardDetails({
                       selected={cardDetails.start_time}
                       onChange={(e) => updateDate("start_time", e)}
                     />
-                    {completed ? (
+                    {cardDetails.completed ? (
                       <div className="state">Completed</div>
                     ) : (new Date(cardDetails.start_time) - new Date()) /
                         (1000 * 60 * 60 * 24) >
@@ -483,59 +509,10 @@ function CardDetails({
                     </div>
                   </form>
                 )}
-                <div className="cover-wrapper">
-                  {coverImage ? (
-                    <div className="cover-image">
-                      <img
-                        src={coverImage}
-                        alt="Cover"
-                        style={{
-                          maxWidth: "200px",
-                          height: "200px",
-                          marginBottom: "20px",
-                        }}
-                      />
-                      <br />
-                      <button
-                        className="remove-cover"
-                        onClick={handleRemoveCover}
-                      >
-                        Remove Cover
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="upload-cover">
-                      <label htmlFor="cover-upload">
-                        <svg
-                          width="24"
-                          height="24"
-                          role="presentation"
-                          focusable="false"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            clipRule="evenodd"
-                            d="M5 3C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3H5ZM5 5H19V19H5V5ZM12 7C9.79086 7 8 8.79086 8 11C8 13.2091 9.79086 15 12 15C14.2091 15 16 13.2091 16 11C16 8.79086 14.2091 7 12 7ZM12 9C13.1046 9 14 9.89543 14 11C14 12.1046 13.1046 13 12 13C10.8954 13 10 12.1046 10 11C10 9.89543 10.8954 9 12 9Z"
-                            fill="currentColor"
-                          ></path>
-                        </svg>
-                        Upload Cover
-                      </label>
-                      <input
-                        type="file"
-                        id="cover-upload"
-                        accept="image/*"
-                        onChange={handleCoverUpload}
-                        style={{ display: "none" }}
-                      />
-                    </div>
-                  )}
-                </div>
+
                 <div className="wrapper">
                   {cardDetails.comments?.map((comment, i) => (
-                    <div className="comment-item">
+                    <div className="comment-item" key={i}>
                       <div className="user-info">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
@@ -555,62 +532,44 @@ function CardDetails({
                   ))}
                 </div>
               </div>
-              {/* {attachFile ? (
-                <div className="attachment">
-                  <img width="30px" src={attach} alt="" /> Attachment{" "}
-                  <div
-                    className="iamge-wrapper"
-                    style={{
-                      width: "100%",
-                      height: "200px",
-                    }}
-                  >
+
+              <div>
+                {cardDetails.photo && (
+                  <div className="cover-image">
                     <ModalImage
-                      small={URL.createObjectURL(attachFile)}
-                      large={URL.createObjectURL(attachFile)}
-                      alt="Hello World!"
-                    />
-                                        
-                    <img
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        marginBlock: "18px",
-                      }}
-                      src={URL.createObjectURL(attachFile)}
-                      alt=""
+                      small={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
+                      large={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
+                      alt="cover Image"
                     />
                   </div>
-                </div>
-              ) : cardDetails.photo ? (
-                <div className="attachment">
-                  <img width="30px" src={attach} alt="" /> Attachment{" "}
-                  <div className="iamge-wrapper">
-                    <img src={cardDetails.photo} alt="" />
-                  </div>
-                </div>
-              ) : (
-                ""
-              )} */}
+                )}
+              </div>
             </div>
 
             <div className="right">
-              <div className="item" onClick={handleSaveCover}>
-                <img src={list} alt="Cover" /> Cover Save
-              </div>
+              <input
+                type="file"
+                id="uploadCover"
+                onChange={handleCoverUpload}
+                style={{ display: "none" }}
+              />
+              {cardDetails.photo && (
+                <div className="item" onClick={handleRemovePhoto}>
+                  <img src={deleteCover} alt="Cover" />
+                  Remove Cover
+                </div>
+              )}
+
               <div className="item">
-                {/* <input
-                  type="file"
-                  style={{ display: "none" }}
-                  id="attachfile"
-                  onChange={(e) => setattachFile(e.target.files[0])}
-                />
-                <label htmlFor="attachfile">
-                  
-                </label> */}
-                <img src={attach} alt="" /> Attachment{" "}
+                <label
+                  htmlFor="uploadCover"
+                  style={{ width: "100%", cursor: "pointer" }}
+                >
+                  <img src={list} alt="Cover" />
+                  Update Cover
+                </label>
               </div>
+
               <div className="item date" style={{ padding: "3px" }}>
                 <DatePicker
                   showIcon
@@ -621,7 +580,6 @@ function CardDetails({
                 />
                 <span>Date</span>
               </div>
-
               <div className="item" onClick={handleDelete}>
                 <img src={deleteimage} alt="Delete" /> Delete
               </div>

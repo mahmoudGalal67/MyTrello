@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "./card.css";
 import CardDetails from "../CardDetails/CardDetails";
+import api from "../../apiAuth/auth";
 
-function Card({ card, onCardDelete, updateCardCoverImage, listId }) {
+import Cookies from "js-cookie";
+
+function Card({ card, onCardDelete, listId }) {
   const [open, setOpen] = useState(false);
-  const [coverImage, setCoverImage] = useState(card.photo_url);
 
-  const [cardNew, setcardNew] = useState(card);
+  const cookies = Cookies.get("token");
 
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
@@ -15,38 +17,46 @@ function Card({ card, onCardDelete, updateCardCoverImage, listId }) {
     onCardDelete(id);
     onCloseModal();
   };
+
+  const [cardDetails, setcardDetails] = useState({});
+
   useEffect(() => {
-    setCoverImage(card.photo_url);
-  }, [card.photo_url]);
+    const fetchcarddetails = async () => {
+      try {
+        const { data } = await api({
+          url: `cards/get-card/${card.card_id}`,
+          headers: { Authorization: `Bearer ${cookies}` },
+        });
+        setcardDetails(data.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchcarddetails();
+  }, [card.card_id]);
 
   return (
     <>
       <div className="item" onClick={onOpenModal}>
-        <div>
-          {coverImage && (
+        {cardDetails.photo && (
+          <div>
             <img
-              src={coverImage}
-              alt="Card Cover"
-              style={{
-                width: "100%",
-                height: "150px",
-                objectFit: "cover",
-                marginBottom: "10px",
-              }}
+              src={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
+              alt="Cover"
+              className=""
+              style={{ width: "200px", height: "100px" }}
             />
-          )}
-        </div>
-        {cardNew.card_text}
+          </div>
+        )}
+        <div>{cardDetails.text}</div>
       </div>
       <CardDetails
-        card={cardNew}
-        setcardNew={setcardNew}
         onCloseModal={onCloseModal}
         listId={listId}
         open={open}
+        cardDetails={cardDetails}
+        setcardDetails={setcardDetails}
         onDeleteCard={handleDeleteCard}
-        setCoverImage={setCoverImage}
-        updateCardCoverImage={updateCardCoverImage}
       />
     </>
   );

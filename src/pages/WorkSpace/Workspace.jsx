@@ -103,9 +103,14 @@ function MyVerticallyCenteredModal(props) {
           Invite to Workspace
         </Modal.Title>
       </Modal.Header>
-      <label value="" style={{fontSize:"18px",marginLeft:"20px",marginTop:"25px"}}>Select users...</label>
-      <Modal.Body>  
-        <Form style={{marginTop:"-10px"}}>
+      <label
+        value=""
+        style={{ fontSize: "18px", marginLeft: "20px", marginTop: "25px" }}
+      >
+        Select users...
+      </label>
+      <Modal.Body>
+        <Form style={{ marginTop: "-10px" }}>
           <Form.Group controlId="userSelect">
             <Form.Label>Select Users</Form.Label>
             <Form.Select
@@ -113,7 +118,6 @@ function MyVerticallyCenteredModal(props) {
               aria-label="Select users"
               onChange={handleUserSelect}
             >
-            
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name}
@@ -262,10 +266,14 @@ function Workspace() {
                   >
                     <div className="card">
                       <img
-                        src="/photo-1719825718360-7de63c92135f.webp"
+                        src={
+                          board.board_background
+                            ? `https://back.alyoumsa.com/public/storage/${board.board_background}`
+                            : "/photo-1675981004510-4ec798f42006.jpg"
+                        }
                         alt=""
                       />
-                      <p>{board.board_name}</p>
+                      <p style={{ padding: "8px" }}>{board.board_name}</p>
                     </div>
                   </Link>
                 ))}

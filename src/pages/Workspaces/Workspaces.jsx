@@ -24,24 +24,44 @@ function Workspace() {
 
   const cookies = Cookies.get("token");
 
-  useEffect(() => {
-    const getWorkSpaces = async () => {
-      try {
-        const { data } = await api({
-          url: "/workspaces/get-workspaces",
-          headers: { Authorization: `Bearer ${cookies}` },
-        });
-        setworkSpaces(data.result);
-        setLoading(false);
-      } catch (err) {
-        setLoading(false);
-        console.log(err);
-      }
-    };
-    getWorkSpaces();
-  }, [cookies]);
+  // useEffect(() => {
+  //   const getWorkSpaces = async () => {
+  //     try {
+  //       const { data } = await api({
+  //         url: "/workspaces/get-workspaces",
+  //         headers: { Authorization: `Bearer ${cookies}` },
+  //       });
+  //       setworkSpaces(data.result);
+  //       setLoading(false);
+  //     } catch (err) {
+  //       setLoading(false);
+  //       console.log(err);
+  //     }
+  //   };
+  //   getWorkSpaces();
+  // }, [cookies]);
 
   // edit and delete board
+
+  const fetchWorkspaces = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api({
+        url: "/workspaces/get-workspaces",
+        headers: { Authorization: `Bearer ${cookies}` },
+      });
+      setworkSpaces(data.result);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [cookies]);
+
   const handleEditClick = (board_id, currentBoardName, currentBoardPhoto) => {
     setEditingBoardId(board_id);
     setEditedBoardName(currentBoardName);
@@ -51,49 +71,88 @@ function Workspace() {
 
   const handleSaveClick = async (workspace_id, board_id) => {
     try {
-      const formData = new FormData();
-      formData.append("workspace_id", workspace_id);
-      formData.append("name", editedBoardName);
-      if (editedBoardPhoto) {
-        formData.append("photo", editedBoardPhoto);
-      }
-
-      const response = await api({
+      const nameUpdateResponse = await api({
         url: `/boards/update/${board_id}`,
         method: "POST",
-        headers: { Authorization: `Bearer ${cookies}` },
-        data: formData,
+        headers: {
+          Authorization: `Bearer ${cookies}`,
+          "Content-Type": "application/json",
+        },
+        data: {
+          workspace_id: workspace_id,
+          name: editedBoardName,
+        },
       });
 
-      setworkSpaces((prevWorkspaces) =>
-        prevWorkspaces.map((workspace) =>
-          workspace.workspace_id === workspace_id
-            ? {
-                ...workspace,
-                boards_of_the_workspace: workspace.boards_of_the_workspace.map(
-                  (board) =>
-                    board.board_id === board_id
-                      ? {
-                          ...board,
-                          board_name: editedBoardName,
-                          board_background: response.data.board_background,
-                        } // Update imageUrl
-                      : board
-                ),
-              }
-            : workspace
-        )
-      );
+      if (nameUpdateResponse.data.success) {
+        console.log(
+          "Board name updated successfully:",
+          nameUpdateResponse.data.data
+        );
 
-      setEditingBoardId(null);
-      setEditedBoardName("");
-      setEditedBoardPhoto(null);
-      setShowModal(false);
+        let updatedPhotoUrl = null;
+
+        if (editedBoardPhoto && editedBoardPhoto instanceof File) {
+          const photoFormData = new FormData();
+          photoFormData.append("photo", editedBoardPhoto);
+
+          const photoUploadResponse = await api({
+            url: `/boards/upload/${board_id}`,
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${cookies}`,
+              "Content-Type": "multipart/form-data",
+            },
+            data: photoFormData,
+          });
+
+          if (photoUploadResponse.data.success) {
+            updatedPhotoUrl = photoUploadResponse.data.data.photo;
+            console.log("Board photo uploaded successfully:", updatedPhotoUrl);
+          } else {
+            console.log(
+              "Photo upload failed:",
+              photoUploadResponse.data.message
+            );
+          }
+        }
+
+        setworkSpaces((prevWorkspaces) =>
+          prevWorkspaces.map((workspace) =>
+            workspace.workspace_id === workspace_id
+              ? {
+                  ...workspace,
+                  boards_of_the_workspace:
+                    workspace.boards_of_the_workspace.map((board) =>
+                      board.board_id === board_id
+                        ? {
+                            ...board,
+                            board_name: editedBoardName,
+                            photo: updatedPhotoUrl,
+                          }
+                        : board
+                    ),
+                }
+              : workspace
+          )
+        );
+
+        setEditingBoardId(null);
+        setEditedBoardName("");
+        setEditedBoardPhoto("");
+        setShowModal(false);
+        fetchWorkspaces();
+      } else {
+        console.log(
+          "Board name update failed:",
+          nameUpdateResponse.data.message
+        );
+      }
     } catch (error) {
-      console.log("Error updating board name:", error);
+      console.log("Error updating board:", error);
+      alert("Failed to update board. Please try again.");
     }
   };
-
   const handleCancelEdit = () => {
     setEditingBoardId(null);
     setEditedBoardName("");
@@ -237,47 +296,61 @@ function Workspace() {
             <div className="wrapper">
               {workspace.boards_of_the_workspace.map((board) => (
                 <div className="board-container" key={board.board_id}>
-                  {/* ${board.board_background} */}
                   <div
                     className="card"
                     style={{
-                      backgroundImage: `url('photo-1719825718360-7de63c92135f.webp')`,
+                      backgroundImage: board.board_background
+                        ? `url(https://back.alyoumsa.com/public/storage/${board.board_background})`
+                        : "url(public/photo-1675981004510-4ec798f42006.jpg)",
                     }}
                   >
-                    <div className="card-content">
-                      <Link
-                        className="board-link"
-                        to={`board/${workspace.workspace_id}/${board.board_id}`}
-                      >
+                    <Link
+                      className="board-link"
+                      to={`board/${workspace.workspace_id}/${board.board_id}`}
+                    >
+                      <div className="card-content">
                         <p className="board-name">{board.board_name}</p>
-                      </Link>
-                      <Button
-                        variant="primary"
-                        onClick={
-                          () =>
+                      </div>
+                    </Link>
+                    <Dropdown>
+                      <Dropdown.Toggle
+                        as="button"
+                        className="custom-dropdown-toggle p-0 no-caret"
+                      >
+                        <span
+                          className="vertical-dots"
+                          style={{ color: "white" }}
+                        >
+                          ⋮
+                        </span>
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu>
+                        <Dropdown.Item
+                          onClick={() =>
                             handleEditClick(
                               board.board_id,
                               board.board_name,
                               board.board_background
-                            ) // Pass imageUrl
-                        }
-                        className="edit-button"
-                      >
-                        <i className="fa-regular fa-pen-to-square"></i>
-                      </Button>
-                      <Button
-                        variant="danger"
-                        onClick={() =>
-                          handleDeleteClick(
-                            workspace.workspace_id,
-                            board.board_id
-                          )
-                        }
-                        className="delete-button ms-2"
-                      >
-                        <i className="fa-regular fa-trash-can"></i>
-                      </Button>
-                    </div>
+                            )
+                          }
+                        >
+                          <i className="fa-regular fa-pen-to-square me-2"></i>{" "}
+                          Edit
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          onClick={() =>
+                            handleDeleteClick(
+                              workspace.workspace_id,
+                              board.board_id
+                            )
+                          }
+                          className="text-danger"
+                        >
+                          <i className="fa-regular fa-trash-can me-2"></i>{" "}
+                          Delete
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
                   </div>
                 </div>
               ))}
@@ -287,7 +360,7 @@ function Workspace() {
       </div>
       <Modal show={showModal} onHide={handleCancelEdit}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit Board Name</Modal.Title>
+          <Modal.Title>Edit Board</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form.Group controlId="formBoardName">
@@ -313,16 +386,14 @@ function Workspace() {
           </Button>
           <Button
             variant="primary"
-            onClick={() =>
-              handleSaveClick(
-                workSpaces.find((ws) =>
-                  ws.boards_of_the_workspace.some(
-                    (b) => b.board_id === editingBoardId
-                  )
-                ).workspace_id,
-                editingBoardId
-              )
-            }
+            onClick={() => {
+              const workspace = workSpaces.find((ws) =>
+                ws.boards_of_the_workspace.some(
+                  (b) => b.board_id === editingBoardId
+                )
+              );
+              handleSaveClick(workspace.workspace_id, editingBoardId);
+            }}
           >
             Save Changes
           </Button>
