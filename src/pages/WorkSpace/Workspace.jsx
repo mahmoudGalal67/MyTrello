@@ -20,7 +20,6 @@ function MyVerticallyCenteredModal(props) {
 
   const { workspaceId } = useParams();
   const cookies = Cookies.get("token");
-  console.log("Workspace ID from params:", workspaceId);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -58,7 +57,7 @@ function MyVerticallyCenteredModal(props) {
         "/workspaces/assign-user-to-workspace",
         {
           workspace_id: workspaceId,
-          user_id: selectedUsers.map((userId) => parseInt(userId)),
+          user_id: [selectedUsers],
         },
         {
           headers: { Authorization: `Bearer ${cookies} ` },
@@ -90,7 +89,7 @@ function MyVerticallyCenteredModal(props) {
       event.target.selectedOptions,
       (option) => option.value
     );
-    setSelectedUsers(value);
+    setSelectedUsers(Number(value[0]));
   };
 
   const fetchWorkspaceUsers = async () => {
@@ -101,7 +100,7 @@ function MyVerticallyCenteredModal(props) {
           headers: { Authorization: `Bearer ${cookies}` },
         }
       );
-      setWorkspaceUsers(response.data.users);
+      setWorkspaceUsers(response.data.result.users);
     } catch (err) {
       console.error("Error fetching workspace users:", err);
       setError("Failed to fetch workspace users");
@@ -110,12 +109,15 @@ function MyVerticallyCenteredModal(props) {
 
   // remove user from workspace
 
-  const handleRemoveUserFromWorkspace = async (userId) => {
+  const handleRemoveUserFromWorkspace = async () => {
     await fetchWorkspaceUsers();
 
     const userInWorkspace = workspaceUsers.some(
-      (user) => user.user_id === userId
+      (user) => user.user_id == selectedUsers
     );
+
+    console.log(userInWorkspace);
+    console.log(selectedUsers);
 
     if (!userInWorkspace) {
       alert("User is not in the workspace!");
@@ -123,13 +125,13 @@ function MyVerticallyCenteredModal(props) {
     }
 
     try {
-      await api.delete(`/workspaces/destroy/${workspaceId}`, {
+      await api.post("workspaces/remove-user-from-workspace", {
         headers: { Authorization: `Bearer ${cookies}` },
-        data: { user_id: userId },
+        data: { user_id: selectedUsers, workspace_id: workspaceId },
       });
 
       setWorkspaceUsers(
-        workspaceUsers.filter((user) => user.user_id !== userId)
+        workspaceUsers.filter((user) => user.user_id !== selectedUsers)
       );
       alert("User successfully removed from the workspace!");
     } catch (err) {
@@ -182,7 +184,7 @@ function MyVerticallyCenteredModal(props) {
             >
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.name}
+                  {user.email}
                 </option>
               ))}
             </Form.Select>
@@ -199,7 +201,10 @@ function MyVerticallyCenteredModal(props) {
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={handleInvite}>Invite</Button>
-        <Button onClick={handleRemoveUserFromWorkspace} className="btn-danger">
+        <Button
+          onClick={() => handleRemoveUserFromWorkspace()}
+          className="btn-danger"
+        >
           Remove
         </Button>
         <Button className="btn-info" onClick={props.onHide}>
