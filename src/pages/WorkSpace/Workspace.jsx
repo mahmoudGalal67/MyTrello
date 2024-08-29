@@ -116,7 +116,7 @@ function MyVerticallyCenteredModal(props) {
       (user) => user.user_id == selectedUsers
     );
 
-    console.log(userInWorkspace);
+    console.log(workspaceUsers);
     console.log(selectedUsers);
 
     if (!userInWorkspace) {

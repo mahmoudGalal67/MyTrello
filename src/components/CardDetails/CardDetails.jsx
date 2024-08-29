@@ -82,7 +82,6 @@ function CardDetails({
 
   const [loading, setLoading] = useState(false);
   const [editText, seteditText] = useState(false);
-  const [completed, setcompleted] = useState(false);
   const [addItems, setaddItems] = useState({
     title: false,
     desc: false,
@@ -192,7 +191,7 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo.replace("/storage/", ""),
+          photo: other.photo ? other.photo.replace("/storage/", "") : "",
           card_id: cardDetails.id,
           the_list_id: listId,
           start_time: value,
@@ -241,7 +240,7 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo.replace("/storage/", ""),
+          photo: other.photo ? other.photo.replace("/storage/", "") : "",
           card_id: cardDetails.id,
           the_list_id: listId,
           completed: e.target.checked,
@@ -272,7 +271,7 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo.replace("/storage/", ""),
+          photo: other.photo ? other.photo.replace("/storage/", "") : "",
           card_id: cardDetails.id,
           the_list_id: listId,
         },
