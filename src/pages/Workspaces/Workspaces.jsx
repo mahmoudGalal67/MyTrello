@@ -301,7 +301,7 @@ function Workspace() {
                     style={{
                       backgroundImage: board.board_background
                         ? `url(https://back.alyoumsa.com/public/storage/${board.board_background})`
-                        : "url(public/photo-1675981004510-4ec798f42006.jpg)",
+                        : "url(/photo-1675981004510-4ec798f42006.jpg)",
                     }}
                   >
                     <Link

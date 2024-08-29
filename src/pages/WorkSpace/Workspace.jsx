@@ -16,6 +16,8 @@ function MyVerticallyCenteredModal(props) {
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [workspaceUsers, setWorkspaceUsers] = useState([]);
+
   const { workspaceId } = useParams();
   const cookies = Cookies.get("token");
   console.log("Workspace ID from params:", workspaceId);
@@ -59,7 +61,7 @@ function MyVerticallyCenteredModal(props) {
           user_id: selectedUsers.map((userId) => parseInt(userId)),
         },
         {
-          headers: { Authorization: `Bearer ${cookies}` },
+          headers: { Authorization: `Bearer ${cookies} ` },
         }
       );
       alert("User(s) successfully assigned to the workspace!");
@@ -90,6 +92,66 @@ function MyVerticallyCenteredModal(props) {
     );
     setSelectedUsers(value);
   };
+
+  const fetchWorkspaceUsers = async () => {
+    try {
+      const response = await api.get(
+        `/workspaces/get-workspace/${workspaceId}`,
+        {
+          headers: { Authorization: `Bearer ${cookies}` },
+        }
+      );
+      setWorkspaceUsers(response.data.users);
+    } catch (err) {
+      console.error("Error fetching workspace users:", err);
+      setError("Failed to fetch workspace users");
+    }
+  };
+
+  // remove user from workspace
+
+  const handleRemoveUserFromWorkspace = async (userId) => {
+    await fetchWorkspaceUsers();
+
+    const userInWorkspace = workspaceUsers.some(
+      (user) => user.user_id === userId
+    );
+
+    if (!userInWorkspace) {
+      alert("User is not in the workspace!");
+      return;
+    }
+
+    try {
+      await api.delete(`/workspaces/destroy/${workspaceId}`, {
+        headers: { Authorization: `Bearer ${cookies}` },
+        data: { user_id: userId },
+      });
+
+      setWorkspaceUsers(
+        workspaceUsers.filter((user) => user.user_id !== userId)
+      );
+      alert("User successfully removed from the workspace!");
+    } catch (err) {
+      console.error("API error:", err);
+
+      const responseMessage =
+        err.response?.data?.message || "An unexpected error occurred";
+      console.error("Detailed error response:", err.response);
+
+      if (err.response?.status === 422) {
+        setError(`Validation Error: ${responseMessage}`);
+      } else if (err.response?.status === 400) {
+        setError(`Bad Request: ${responseMessage}`);
+      } else {
+        setError(responseMessage);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkspaceUsers();
+  }, []);
 
   return (
     <Modal
@@ -126,18 +188,23 @@ function MyVerticallyCenteredModal(props) {
             </Form.Select>
           </Form.Group>
         </Form>
-        <div className="ivite">
+        {/* <div className="ivite">
           <p>Invite someone to this Workspace with a link:</p>
           <a href="#">
             <img src="link.svg" alt="" />
             Create Link
           </a>
-        </div>
+        </div> */}
         {error && <p className="error">{error}</p>}
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={handleInvite}>Invite</Button>
-        <Button onClick={props.onHide}>Close</Button>
+        <Button onClick={handleRemoveUserFromWorkspace} className="btn-danger">
+          Remove
+        </Button>
+        <Button className="btn-info" onClick={props.onHide}>
+          Close
+        </Button>
       </Modal.Footer>
     </Modal>
   );
@@ -231,7 +298,7 @@ function Workspace() {
               <div className="item">
                 <label htmlFor="">Sort by</label>
                 <Form.Select aria-label="Default select example">
-                  <option>Open this select menu</option>
+                  <option> select sort</option>
                   <option value="1">One</option>
                   <option value="2">Two</option>
                   <option value="3">Three</option>
@@ -240,7 +307,7 @@ function Workspace() {
               <div className="item">
                 <label htmlFor="">Filter by</label>
                 <Form.Select aria-label="Default select example">
-                  <option>Open this select menu</option>
+                  <option> select filter </option>
                   <option value="1">One</option>
                   <option value="2">Two</option>
                   <option value="3">Three</option>
