@@ -192,7 +192,7 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo && other.photo.replace("/storage/", ""),
+          photo: other.photo ? other.photo.replace("/storage/", "") : "",
           card_id: cardDetails.id,
           the_list_id: listId,
           start_time: value,
@@ -235,7 +235,7 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo && other.photo.replace("/storage/", ""),
+          photo: other.photo ? other.photo.replace("/storage/", "") : "",
           card_id: cardDetails.id,
           the_list_id: listId,
           completed: e.target.checked,
@@ -299,7 +299,7 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo && other.photo.replace("/storage/", ""),
+          photo: other.photo ? other.photo.replace("/storage/", "") : "",
           card_id: cardDetails.id,
           the_list_id: listId,
         },
