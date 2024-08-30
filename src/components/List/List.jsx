@@ -32,7 +32,6 @@ function List({ list, setboard, boardId }) {
         data: {
           text: cardTitle.current.value,
           the_list_id: list.list_id,
-          description: "test",
           // photo: "",
         },
       });

@@ -117,10 +117,14 @@
   overflow-y: scroll;
 }
 
+.list .wrapper .item .cover-image {
+  height: 25px;
+}
+
 .boards .list > .wrapper .item {
+  overflow: hidden;
   width: 100%;
   border-radius: 12px;
-  padding: 8px 12px;
   background-color: #fff;
   box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.45);
   -webkit-box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.45);
@@ -128,6 +132,10 @@
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.3s ease-in;
+}
+
+.boards .list > .wrapper .item .title {
+  padding: 14px 12px;
 }
 
 .boards .list > .wrapper .item:hover {

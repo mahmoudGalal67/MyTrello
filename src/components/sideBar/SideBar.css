@@ -1,3 +1,13 @@
+.offcanvas {
+  width: 280px !important;
+  top: 59px !important;
+  z-index: 100 !important;
+}
+
+.offcanvas-body {
+  overflow-x: hidden;
+}
+
 .side-bar {
   width: 15px;
   height: 100vh;
@@ -20,6 +30,10 @@ button.sideNav-link {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.fade.offcanvas-backdrop {
+  display: none;
 }
 
 button.sideNav-link:hover {
@@ -93,6 +107,11 @@ button.sideNav-link > img {
   background-color: rgba(175, 179, 182, 0.329);
 }
 
+@media (max-width: 850px) {
+  .offcanvas {
+    width: 200px !important;
+  }
+}
 @media (max-width: 1080px) {
   button.sideNav-link {
     top: 150px;

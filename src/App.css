@@ -2,11 +2,22 @@
   margin: 45px 0;
   padding: 0 6%;
   padding-top: 48px;
-  width: 100vw;
+  margin-left: auto;
+  transform: translateX(250px);
+  transition: all 0.2s ease-in-out;
+}
+
+.views.large {
+  transform: translateX(0);
+}
+
+.views.large .wrapper {
+  width: auto;
 }
 
 .views .wrapper {
   flex-wrap: wrap;
+  width: calc(100vw - 340px);
 }
 
 .views h2 {
@@ -112,4 +123,13 @@ button.cancel:hover {
 .err {
   color: rgb(189, 53, 53);
   text-align: center;
+}
+
+@media (max-width: 850px) {
+  .views {
+    transform: translateX(200px);
+  }
+  .views .wrapper {
+    margin-left: 25px;
+  }
 }

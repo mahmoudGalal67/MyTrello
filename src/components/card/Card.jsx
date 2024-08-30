@@ -38,17 +38,15 @@ function Card({ card, onCardDelete, listId }) {
   return (
     <>
       <div className="item" onClick={onOpenModal}>
-        {cardDetails.photo && (
-          <div>
-            <img
-              src={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
-              alt="Cover"
-              className=""
-              style={{ width: "200px", height: "100px" }}
-            />
-          </div>
+        {cardDetails.end_time && (
+          <div
+            className="cover-image"
+            style={{
+              backgroundColor: cardDetails.end_time,
+            }}
+          ></div>
         )}
-        <div>{cardDetails.text}</div>
+        <div className="title">{cardDetails.text}</div>
       </div>
       <CardDetails
         onCloseModal={onCloseModal}

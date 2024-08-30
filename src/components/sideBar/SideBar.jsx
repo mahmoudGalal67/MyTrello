@@ -9,9 +9,7 @@ import { Link, useParams } from "react-router-dom";
 import api from "../../apiAuth/auth";
 import Spinner from "react-bootstrap/esm/Spinner";
 
-function SideBar() {
-  const [show, setShow] = useState(false);
-
+function SideBar({ show, setShow }) {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 

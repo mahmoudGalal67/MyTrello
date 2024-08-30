@@ -4,6 +4,7 @@ import user from "../../../public/user.svg";
 import list from "../../../public/list.svg";
 import attach from "../../../public/attach.svg";
 import deleteimage from "../../../public/delete.svg";
+import coveru from "../../../public/coveru.svg";
 import deleteDate from "../../../public/deleteDate.svg";
 import deleteCover from "../../../public/deleteCover.svg";
 
@@ -27,7 +28,7 @@ import { useEffect, useRef, useState, useContext } from "react";
 
 import Cookies from "js-cookie";
 import api from "../../apiAuth/auth";
-import { Spinner } from "react-bootstrap";
+import { Dropdown, Spinner } from "react-bootstrap";
 
 const CalendarIcon = () => {
   return (
@@ -82,7 +83,6 @@ function CardDetails({
 
   const [loading, setLoading] = useState(false);
   const [editText, seteditText] = useState(false);
-  const [completed, setcompleted] = useState(false);
   const [addItems, setaddItems] = useState({
     title: false,
     desc: false,
@@ -192,18 +192,12 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo.replace("/storage/", ""),
+          photo: other.photo && other.photo.replace("/storage/", ""),
           card_id: cardDetails.id,
           the_list_id: listId,
           start_time: value,
         },
         method: "post",
-      });
-      setcardDetails((prev) => {
-        return {
-          ...prev,
-          start_time: value,
-        };
       });
     } catch (err) {
       console.log(err);
@@ -241,10 +235,43 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo.replace("/storage/", ""),
+          photo: other.photo && other.photo.replace("/storage/", ""),
           card_id: cardDetails.id,
           the_list_id: listId,
           completed: e.target.checked,
+        },
+        method: "post",
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  const updateCoverColor = async (e) => {
+    const {
+      user_name,
+      comments,
+      labels,
+      updated_at,
+      created_at,
+      id,
+      ...other
+    } = cardDetails;
+    setcardDetails((prev) => {
+      return {
+        ...prev,
+        end_time: e.target.value,
+      };
+    });
+    try {
+      await api({
+        url: "/cards/update",
+        headers: { Authorization: `Bearer ${cookies}` },
+        data: {
+          ...other,
+          photo: other.photo && other.photo.replace("/storage/", ""),
+          card_id: cardDetails.id,
+          the_list_id: listId,
+          end_time: e.target.value,
         },
         method: "post",
       });
@@ -272,7 +299,7 @@ function CardDetails({
         headers: { Authorization: `Bearer ${cookies}` },
         data: {
           ...other,
-          photo: other.photo.replace("/storage/", ""),
+          photo: other.photo && other.photo.replace("/storage/", ""),
           card_id: cardDetails.id,
           the_list_id: listId,
         },
@@ -340,14 +367,13 @@ function CardDetails({
       {" "}
       <Modal classNames="card-modal" open={open} onClose={onCloseModal} center>
         <div className="modal-body">
-          {cardDetails.photo && (
-            <div className="cover-image">
-              <img
-                src={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
-                alt="Cover"
-                style={{ width: "100%", height: "200px" }}
-              />
-            </div>
+          {cardDetails.end_time && (
+            <div
+              className="cover-image"
+              style={{
+                background: cardDetails.end_time,
+              }}
+            ></div>
           )}
           {editText ? (
             <form onSubmit={updateRequest}>
@@ -410,7 +436,11 @@ function CardDetails({
                 </div>
               )}
               <div className="description">
-                <div className="header">
+                <div
+                  className="header"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => openItem("desc")}
+                >
                   <svg
                     width="24"
                     height="24"
@@ -532,18 +562,6 @@ function CardDetails({
                   ))}
                 </div>
               </div>
-
-              <div>
-                {cardDetails.photo && (
-                  <div className="cover-image">
-                    <ModalImage
-                      small={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
-                      large={`https://back.alyoumsa.com/public/${cardDetails.photo}`}
-                      alt="cover Image"
-                    />
-                  </div>
-                )}
-              </div>
             </div>
 
             <div className="right">
@@ -556,7 +574,7 @@ function CardDetails({
               {cardDetails.photo && (
                 <div className="item" onClick={handleRemovePhoto}>
                   <img src={deleteCover} alt="Cover" />
-                  Remove Cover
+                  Remove Attachnent
                 </div>
               )}
 
@@ -565,8 +583,8 @@ function CardDetails({
                   htmlFor="uploadCover"
                   style={{ width: "100%", cursor: "pointer" }}
                 >
-                  <img src={list} alt="Cover" />
-                  Update Cover
+                  <img src={attach} alt="Cover" />
+                  Attachment
                 </label>
               </div>
 
@@ -582,6 +600,27 @@ function CardDetails({
               </div>
               <div className="item" onClick={handleDelete}>
                 <img src={deleteimage} alt="Delete" /> Delete
+              </div>
+              <div className="item cover">
+                <Dropdown autoClose="outside">
+                  <Dropdown.Toggle
+                    className="custom-dropdown-toggle p-0 no-caret"
+                    as="button"
+                  >
+                    <img src={coveru} alt="Delete" /> cover
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item as="span">
+                      <input
+                        type="color"
+                        className="color"
+                        onChange={updateCoverColor}
+                      />
+                      <button className="btn btn-info">Update Cover</button>
+                      <button className="btn btn-danger">Delete Cover</button>
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
               </div>
             </div>
           </div>

@@ -12,6 +12,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import { Dropdown } from "react-bootstrap";
 
 function Workspace() {
+  const [show, setShow] = useState(true);
   const [loading, setLoading] = useState(true);
   const [workSpaces, setworkSpaces] = useState([]);
   const [editingBoardId, setEditingBoardId] = useState(null);
@@ -241,6 +242,14 @@ function Workspace() {
     }
   };
 
+  useEffect(() => {
+    if (!show) {
+      document.querySelector(".views")?.classList.add("large");
+    } else {
+      document.querySelector(".views")?.classList.remove("large");
+    }
+  }, [show]);
+
   if (loading) {
     return (
       <div className="w-100 h-100 d-flex justify-content-center align-items-center position-fixed top-0 left-0">
@@ -254,7 +263,7 @@ function Workspace() {
   return (
     <div className="home">
       <Navbar workSpaces={workSpaces} />
-      <SideBar />
+      <SideBar show={show} setShow={setShow} />
       <div className="views">
         {workSpaces.map((workspace) => (
           <div className="workspace-item" key={workspace.workspace_id}>
@@ -315,6 +324,7 @@ function Workspace() {
                     <Dropdown>
                       <Dropdown.Toggle
                         as="button"
+                        drop="down"
                         className="custom-dropdown-toggle p-0 no-caret"
                       >
                         <span
